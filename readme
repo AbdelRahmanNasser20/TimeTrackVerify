@@ -1,0 +1,111 @@
+Panda Programming Verify
+This project consists of three main components: a frontend, a backend, and a PostgreSQL database. Below are instructions for running the entire stack using Docker Compose and for running each service individually without Docker.
+
+Running with Docker Compose
+Prerequisites
+Docker installed on your machine.
+Docker Compose installed.
+Steps
+Clone the Repository:
+
+bash
+Copy code
+git clone https://github.com/your_username/panda-programming-verify.git
+cd panda-programming-verify
+Build and Start the Services:
+
+bash
+Copy code
+docker-compose up --build
+This command will build the Docker images and start all services (frontend, backend, and database) defined in the docker-compose.yml file.
+
+Access the Services:
+
+Frontend: http://localhost:3000
+Backend: http://localhost:5000
+PostgreSQL: localhost:5432
+Running Services Individually (Without Docker)
+Prerequisites
+Node.js and npm installed (for the frontend).
+Python and pip installed (for the backend).
+PostgreSQL installed and running.
+Steps
+Frontend
+Navigate to the Frontend Directory:
+
+bash
+Copy code
+cd front
+Install Dependencies:
+
+bash
+Copy code
+npm install
+Start the Frontend:
+
+bash
+Copy code
+npm start
+The frontend will be available at http://localhost:3000.
+
+Backend
+Navigate to the Backend Directory:
+
+bash
+Copy code
+cd backend
+Create and Activate a Virtual Environment:
+
+bash
+Copy code
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+Install Dependencies:
+
+bash
+Copy code
+pip install -r requirements.txt
+Set Environment Variables:
+
+Create a .env file in the backend directory and add the following environment variables:
+
+env
+Copy code
+FLASK_ENV=development
+DATABASE_URL=postgresql://abdelnasser:greatness@localhost:5432/mydatabase
+Start the Backend:
+
+bash
+Copy code
+flask run --host=0.0.0.0 --port=5000
+The backend will be available at http://localhost:5000.
+
+PostgreSQL
+Install PostgreSQL:
+Follow the instructions for your operating system to install PostgreSQL.
+
+Start PostgreSQL Service:
+Make sure the PostgreSQL service is running.
+
+Create the Database and User:
+
+Access the PostgreSQL shell:
+
+bash
+Copy code
+psql -U postgres
+Run the following SQL commands to create the database and user:
+
+sql
+Copy code
+CREATE DATABASE mydatabase;
+CREATE USER abdelnasser WITH PASSWORD 'greatness';
+GRANT ALL PRIVILEGES ON DATABASE mydatabase TO abdelnasser;
+Restore the Database:
+
+bash
+Copy code
+pg_restore -U abdelnasser -d mydatabase -v path/to/local_db_backup.dump
+Accessing the Application
+Frontend: http://localhost:3000
+Backend: http://localhost:5000

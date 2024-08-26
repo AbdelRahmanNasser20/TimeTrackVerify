@@ -1,42 +1,54 @@
-import unittest
-from app import create_app, db
-from app.models import Employee, Event
+import pytest
+from sqlalchemy import inspect
+from app.models import Employee, Event, User  # Import your models here
 
-class ModelsTestCase(unittest.TestCase):
-    def setUp(self):
-        # Initialize the app wi th the testing configuration
-        self.app = create_app('testing')        
-        self.client = self.app.test_client()
+def test_employee_model(db):
+    """Test the Employee model schema."""
+    inspector = inspect(db.engine)
+    
+    # Check that the 'employees' table exists
+    assert 'employees' in inspector.get_table_names(), "'employees' table does not exist"
+    
+    # Check the columns in the 'employees' table
+    columns = inspector.get_columns('employees')
+    column_names = {column['name'] for column in columns}
+    
+    expected_columns = {'id', 'name', 'email', 'phone_number'}
+    missing_columns = expected_columns - column_names
+    assert not missing_columns, f"Missing columns in 'employees' table: {missing_columns}"
 
-        # Create all tables in the in-memory SQLite database
-        with self.app.app_context():
-            db.create_all()
+    print(f"Success: 'employees' table has the expected columns: {column_names}")
 
-    def tearDown(self):
-        # Drop all tables
-        with self.app.app_context():
-            db.session.remove()
-            db.drop_all()
+def test_event_model(db):
+    """Test the Event model schema."""
+    inspector = inspect(db.engine)
+    
+    # Check that the 'events' table exists
+    assert 'events' in inspector.get_table_names(), "'events' table does not exist"
+    
+    # Check the columns in the 'events' table
+    columns = inspector.get_columns('events')
+    column_names = {column['name'] for column in columns}
+    
+    expected_columns = {'id', 'employee_id', 'name', 'date', 'duration', 'position', 'location'}
+    missing_columns = expected_columns - column_names
+    assert not missing_columns, f"Missing columns in 'events' table: {missing_columns}"
 
-    def test_employee_model(self):
-        # Create and add an employee to the database
-        employee = Employee(name='John Doe', email='john.doe@example.com')
-        with self.app.app_context():
-            db.session.add(employee)
-            db.session.commit()
-            # Check if the employee count is 1
-            self.assertEqual(Employee.query.count(), 1)
+    print(f"Success: 'events' table has the expected columns: {column_names}")
 
-    def test_event_model(self):
-        # Create an employee and an event, and add them to the database
-        employee = Employee(name='John Doe', email='john.doe@example.com')
-        event = Event(name='Meeting', date='2024-06-20', duration='1h', position='Manager', location='Office', employee=employee)
-        with self.app.app_context():
-            db.session.add(employee)
-            db.session.add(event)
-            db.session.commit()
-            # Check if the event count is 1
-            self.assertEqual(Event.query.count(), 1)
+def test_user_model(db):
+    """Test the User model schema."""
+    inspector = inspect(db.engine)
+    
+    # Check that the 'user' table exists
+    assert 'user' in inspector.get_table_names(), "'user' table does not exist"
+    
+    # Check the columns in the 'user' table
+    columns = inspector.get_columns('user')
+    column_names = {column['name'] for column in columns}
+    
+    expected_columns = {'id', 'username', 'email'}
+    missing_columns = expected_columns - column_names
+    assert not missing_columns, f"Missing columns in 'user' table: {missing_columns}"
 
-if __name__ == '__main__':
-    unittest.main()
+    print(f"Success: 'user' table has the expected columns: {column_names}")

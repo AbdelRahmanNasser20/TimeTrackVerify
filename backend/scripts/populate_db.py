@@ -29,5 +29,5 @@ with app.app_context():
     db.session.add(event1)
     db.session.add(event2)
 
-    db.session.commit()
+    db.session.rollback()    
     print("Database populated successfully.")

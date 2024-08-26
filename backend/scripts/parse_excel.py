@@ -5,7 +5,7 @@ import pandas as pd
 import difflib
 from datetime import datetime
 
-
+# Add the parent directory to the system path before importing `app`
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app import create_app, db
@@ -14,9 +14,8 @@ from app.models import Employee, Event
 # Print the current working directory
 print("Current Directory:", os.getcwd())
 
-# Add the parent directory to the system path before importing `app`
 
-
+print(os.path)
 app = create_app('development')
 
 MOE_EMAIL = "m.fouladi99@gmail.com"

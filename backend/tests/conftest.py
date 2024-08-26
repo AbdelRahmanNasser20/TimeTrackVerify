@@ -1,39 +1,55 @@
-import pytest
-from app import create_app, db
-from sqlalchemy import create_engine, inspect
-from sqlalchemy.orm import sessionmaker
-from dotenv import load_dotenv
 import os
+import sys
+import pytest
+from dotenv import load_dotenv
+from app import create_app, db as _db
+from sqlalchemy.orm import scoped_session, sessionmaker
 
-# Load environment variables from .env file
-load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '../.env'))
+# Ensure the sys.path includes the backend directory for imports
+from dotenv import load_dotenv
+load_dotenv()
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='session')
 def app():
-    print("Setting up the Flask application")
-    app = create_app('testing')
-    with app.app_context():
-        yield app
-    print("Teardown the Flask application")
+    """Setup Flask application for testing."""
 
-@pytest.fixture(scope='function')
-def client(app):
-    return app.test_client()
-
-@pytest.fixture(scope='function')
-def database(app):
-    print("Setting up the database")
-    engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'], connect_args={"connect_timeout": 10})
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    with app.app_context():
-        db.create_all()
-        yield session
-        db.session.remove()
-        db.drop_all()
-    session.close()
-    engine.dispose()
-    print("Teardown the database")
-
-
+    flask_env = os.getenv('FLASK_ENV')
+    # Use the 'testing' configuration or whichever is appropriate
+    if flask_env == 'testing':        
+        # For testing, use SQLite in-memory database
+        app = create_app('testing')
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+    else:
+        # Otherwise, use the specified environment (development, production)
+        app = create_app(flask_env)
     
+    with app.app_context():
+        yield app  # This is where the testing happens
+
+@pytest.fixture(scope='session')
+def db(app):
+    """Setup the database for testing."""
+    _db.app = app
+    _db.create_all()
+
+    yield _db  # Provide the fixture value
+
+    # _db.session.remove()
+    # if app.config['TESTING']:
+    #     print("**********************/////////////////WARNING DROPING ALLL TABLES*********************//////////////////")
+    #     _db.drop_all()  # Only drop tables if in testing mode
+
+@pytest.fixture(scope='function')
+def session(db):
+    """Creates a new database session for a test."""
+    connection = db.engine.connect()
+    transaction = connection.begin()
+
+    # Use sessionmaker to create a new session
+    session = scoped_session(sessionmaker(bind=connection))
+
+    yield session  # This is where the test runs
+
+    transaction.rollback()
+    connection.close()
+    session.remove()

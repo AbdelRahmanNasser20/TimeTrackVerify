@@ -1,5 +1,14 @@
-from .db_queries import get_events_for_employee_by_date, sum_hours_by_role_from_db, count_entries_for_employee
+from app.db_queries import retrieve_all_db_events_for_employee, get_events_for_employee_by_date, count_entries_for_employee, sum_hours_by_role_from_db
 from datetime import datetime
+from .extensions import db
+
+
+class Event:
+        def __init__(self, date, duration, position, location):
+            self.date = date
+            self.duration = duration
+            self.position = position
+            self.location = location
 
 def reformat_date(date_str):
     """
@@ -10,6 +19,7 @@ def reformat_date(date_str):
     except ValueError:
         print(f"Invalid date format for {date_str}")
         return "Invalid date format"
+    
 
 def sum_hours_by_position_from_timesheet(timesheet_entries):
     """
@@ -56,53 +66,97 @@ def validate_entry(db_entry, timesheet_entry):
         print(f"Error validating entry: {e}")
         return {'date': False, 'duration': False, 'location': False, 'position': False}
 
-def process_timesheet_entries(employee_id, timesheet_entries):
+
+def process_timesheet_entries(db_entries, timesheet_entries):
     """
-    Processes a list of timesheet entries for a given employee.
-    Validates each timesheet entry against the corresponding database entry.
+    Processes a list of timesheet entries against a list of database entries.
     """
     invalid_entries = []
+    for entry in timesheet_entries:
+        formatted_date = reformat_date(entry['date'])
+        position = entry['position']
+        matching_db_entry = None
 
-    for timesheet_entry in timesheet_entries:
-        date, position, hours, location = reformat_date(timesheet_entry['date']), timesheet_entry['position'], timesheet_entry['hours'], timesheet_entry['location']
-        db_entry = get_events_for_employee_by_date(employee_id, date)
+        for db_entry in db_entries:
+            if db_entry.date == formatted_date and db_entry.position == position:
+                matching_db_entry = db_entry
+                break
 
-        if db_entry:
-            validation = validate_entry(db_entry, timesheet_entry)
+        if matching_db_entry:
+            validation = validate_entry(matching_db_entry, entry)
             if not all(validation.values()):
                 invalid_entries.append(validation)
         else:
-            # No matching database entry found
-            invalid_entries.append({'date': date, 'duration': False, 'location': False, 'position': False})
+            invalid_entries.append({
+                'date': formatted_date,
+                'duration': False,
+                'position': False
+            })
 
     print(f"Processed entries. Invalid entries: {invalid_entries}")
     return invalid_entries
 
-def generate_report(employee_id, timesheet_entries):
+def generate_report(db_entries, timesheet_entries):
     """
     Generates a report comparing timesheet entries to database entries.
     """
     try:
         report = {}
-        report["timesheetEntries"] = len(timesheet_entries)
-        report["databaseEntries"] = count_entries_for_employee(employee_id)
-        
-        report["databaseHours"] = sum_hours_by_role_from_db(employee_id)
+        report["numberOfTimesheetEntries"] = len(timesheet_entries)
+        report["numberOfDatabaseEntries"] = len(db_entries)
+        report["databaseHours"] = sum_hours_by_position_from_timesheet(db_entries)
         report["timesheetHours"] = sum_hours_by_position_from_timesheet(timesheet_entries)
-        
-        print(f"Generated report: {report}")
         return report
     except Exception as e:
         print(f"Error generating report: {e}")
         return {}
 
+def prepare_report_data(employee_id, timesheet_entries, session=db.session):
+    """
+    Prepares the data needed for generating the report.
+    """
+    db_entries = retrieve_all_db_events_for_employee(employee_id, session)
+    return generate_report(db_entries, timesheet_entries)
+
 # Example usage
 if __name__ == "__main__":
-    employee_id = 1  # Replace with actual employee ID for testing
-    timesheet_entries = [
-        {'date': '2023-12-01', 'position': 'Teacher - Lead', 'hours': 5.0, 'location': 'School A'},
-        {'date': '2023-12-02', 'position': 'Teacher - Assistant', 'hours': 3.0, 'location': 'School B'}
-    ]
+    import os
+    import sys
+    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))    
+    from app import create_app
+
+    app = create_app('development')
+
+    with app.app_context():
+        from app.db_queries import get_events_for_employee_by_date, sum_hours_by_role_from_db, count_entries_for_employee
+        from datetime import datetime
+                
     
-    report = generate_report(employee_id, timesheet_entries)
-    print(report)
+
+        # Dummy database data
+        dummy_db_events = {
+            '2023-12-01': [
+                Event('12/01/2023', 5.0, 'Teacher - Lead', 'School A'),
+                Event('12/01/2023', 2.0, 'Teacher - Assistant', 'School A')
+            ],
+            '2023-12-02': [
+                Event('12/02/2023', 3.0, 'Teacher - Assistant', 'School B'),
+                Event('12/02/2023', 4.0, 'Teacher - Lead', 'School B')
+            ]
+        }
+        
+        
+        timesheet_entries = [
+            {"date": '12/01/2023', "hours": 5.0, "position": 'Teacher - Lead', "location": 'School A'},
+            {"date": '12/01/2023', "hours": 2.0, "position": 'Teacher - Assistant', "location": 'School A'},
+            {"date": '12/02/2023', "hours": 3.0, "position": 'Teacher - Assistant', "location": 'School B'},
+            {"date": '12/02/2023', "hours": 4.0, "position": 'Teacher - Lead', "location": 'School B'}
+        ]
+        
+            # Generate and print the report
+        report = generate_report(1, timesheet_entries)
+        print(report)
+        
+        # Process and print invalid entries
+        invalid_entries = process_timesheet_entries(1, timesheet_entries)
+        print(f"Invalid Entries: {invalid_entries}")

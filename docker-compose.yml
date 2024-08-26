@@ -1,47 +1,51 @@
 version: '3.8'
 
 services:
-  front:
-    build:
-      context: ./front
-    volumes:
-      - ./front:/app  # Maps the local front directory to the container
-    ports:
-      - "3000:3000"  # Set the port directly
-    networks:
-      - app-network
-    environment:
-      - NODE_ENV=development
-      - REACT_APP_API_URL=http://backend:5001
-
+  # front:
+  #   build:
+  #     context: ./front
+  #   volumes:
+  #     - ./front:/app
+  #   ports:
+  #     - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+  #   networks:
+  #     - app-network
+  #   environment:
+  #     - NODE_ENV=${NODE_ENV}
+  #     - REACT_APP_API_URL=${REACT_APP_API_URL}          
+  #     - FLASK_ENV: production
+  #     - FLASK_APP: run.py
+  #     - DATABASE_URL: postgresql://abdelnasser:greatness@db:5432/mydatabase
+      
   backend:
     build:
       context: ./backend
     volumes:
-      - ./backend:/app  # Maps the local backend directory to the container
+      - ./backend:/app
     ports:
-      - "5001:5001"  # Set the port directly
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
     networks:
       - app-network
     environment:
-      - FLASK_ENV=development  # Set the environment to development
-      - DATABASE_URL=postgresql://abdelnasser:greatness@db:5432/mydatabase  # Connection string for PostgreSQL
-      - DEV_DATABASE_URL=postgresql://abdelnasser:greatness@db:5432/mydatabase  # For development config
-      - TEST_DATABASE_URL=postgresql://abdelnasser:greatness@db:5432/mydatabase_test  # For testing config
+      - DATABASE_URL=postgresql://abdelnasser:greatness@db:5432/mydatabase
+    depends_on:
+      - db
 
   db:
     image: postgres:latest
     environment:
-      POSTGRES_USER: abdelnasser
-      POSTGRES_PASSWORD: greatness
-      POSTGRES_DB: mydatabase
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     ports:
       - "5432:5432"
     networks:
       - app-network
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./local_db_backup.dump:/docker-entrypoint-initdb.d/local_db_backup.dump
+      - postgres_data:/var/lib/postgresql/data      
+      - ./mydatabase.dump:/docker-entrypoint-initdb.d/mydatabase.dump
+    # entrypoint: sh -c "python scripts/send_timesheet_data.py && python run.py"
+
 
 networks:
   app-network:

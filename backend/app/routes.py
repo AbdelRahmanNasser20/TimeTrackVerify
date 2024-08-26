@@ -1,8 +1,10 @@
 from flask import Blueprint, jsonify, request
 from datetime import datetime
+from sqlalchemy import text
 from .extensions import db
-from .db_queries import get_employee_id, count_entries_for_employee, sum_hours_by_role_from_db, get_events_for_employee_by_date
-from .verify_timesheet import generate_report, process_timesheet_entries
+from .db_queries import get_employee_id, retrieve_all_db_events_for_employee
+from .verify_timesheet import prepare_report_data, process_timesheet_entries
+import os
 
 api = Blueprint('api', __name__)
 
@@ -23,53 +25,82 @@ def get_status():
 @api.route('/verify', methods=['POST'])
 def verify_timesheet():
     try:
-        print("Hello from Verify")
         data = request.get_json()
-        # Check if the request payload contains the necessary fields
+
         if not data or 'tableData' not in data or 'email' not in data:
-            print("400 bad error")
-            return jsonify({'error': True, 'message': 'Invalid request payload'}), 400  # Bad Request
+            return jsonify({'error': True, 'message': 'Invalid request payload'}), 400
         
-        
-        # Check if email or timesheet entries are empty
         email = data["email"].lower()
-        timeSheetEntries = data['tableData']        
+        timesheet_entries = data['tableData']
 
         if not email:
-            return jsonify({'error': True, 'message': 'Email is required'}), 422  # Unprocessable Entity
+            return jsonify({'error': True, 'message': 'Email is required'}), 422
 
-        if not timeSheetEntries:
-            return jsonify({'error': True, 'message': 'Timesheet entries are required'}), 422  # Unprocessable Entity
-                
-        report,invalidEntries = {}, {}
-
-        # Check if the email exists in the database
+        if not timesheet_entries:
+            return jsonify({'error': True, 'message': 'Timesheet entries are required'}), 422
+        
         employee_id = get_employee_id(email)
-        print("employee_id: ", employee_id)
         
         if employee_id is None:
-            return jsonify({'error': True, 'message': 'Email not found in the database'}), 404  # Not Found
+            return jsonify({'error': True, 'message': 'Email not found in the database'}), 403
+        
+        report = prepare_report_data(employee_id, timesheet_entries)
+        invalid_entries = process_timesheet_entries(retrieve_all_db_events_for_employee(employee_id), timesheet_entries)
 
-        report = generate_report(employee_id, timeSheetEntries)
-        print(report)
         report["emailFound"] = True
 
-        invalidEntries = process_timesheet_entries(employee_id, timeSheetEntries)
-
-        return jsonify({"report": report, "invalidEntries": invalidEntries}), 200
+        return jsonify({"report": report, "invalidEntries": invalid_entries}), 200
 
     except Exception as e:
         print(f"An error occurred: {e}")
-        return jsonify({'error': True, 'message': 'Internal Server Error'}), 500  # Internal Server Error
+        return jsonify({'error': True, 'message': 'Internal Server Error'}), 500
 
-
-@api.route('/api/check_db_connection')
-def check_db_connection():
+@api.route('/run_all_checks')
+def run_all_checks():
+    print("RETRIVING DB URL ", os.getenv('DATABASE_URL'))
+    print(f"Current SQLAlchemy Database URI: {db.engine.url}")
+    results = []
+    
+    # Check DB Connection
     try:
-        result = db.session.execute('SELECT 1').scalar()
+        result = db.session.execute(text('SELECT 1')).scalar()
         if result == 1:
-            return jsonify(status='success', message='Database connection is working.')
+            results.append({'check_db_connection': 'success'})
         else:
-            return jsonify(status='error', message='Database connection failed.')
+            results.append({'check_db_connection': 'failed'})
     except Exception as e:
-        return jsonify(status='error', message=str(e))
+        results.append({'check_db_connection': str(e)})
+
+    # List Tables and Verify Their Presence
+    expected_tables = {"alembic_version", "user", "events", "employees"}
+    try:
+        result = db.session.execute(text("SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public'")).fetchall()
+        tables = {row[0] for row in result}  # Use a set for easier comparison
+        
+        missing_tables = expected_tables - tables
+        if not missing_tables:
+            results.append({'list_tables': 'success', 'tables': list(tables)})
+        else:
+            results.append({'list_tables': 'failed', 'missing_tables': list(missing_tables)})
+    except Exception as e:
+        results.append({'list_tables': str(e)})
+
+    # Check if 'employees' Table Exists
+    try:
+        result = db.session.execute(text("SELECT to_regclass('employees')")).scalar()
+        if result:
+            results.append({'check_table_employees': 'success'})
+        else:
+            results.append({'check_table_employees': 'failed'})
+    except Exception as e:
+        results.append({'check_table_employees': str(e)})
+
+    # Get All Rows from 'employees' Table (First 10)
+    try:
+        result = db.session.execute(text("SELECT id, name FROM employees ORDER BY id LIMIT 10")).fetchall()
+        employees = [{str(id): name} for id, name in result]
+        results.append({'get_employees': 'success', 'employees': employees})
+    except Exception as e:
+        results.append({'get_employees': str(e)})
+
+    return jsonify(results)

@@ -1,70 +1,121 @@
 from .models import Employee, Event
 from .extensions import db
 
-def count_entries_for_employee(employee_id):
+def count_entries_for_employee(employee_id, session=db.session):
     """
     Counts the number of entries in the database for a given employee.
     """
     try:
-        count = db.session.query(Event).filter_by(employee_id=employee_id).count()
-        print(f"Counted {count} entries for employee ID {employee_id}")
+        count = session.query(Event).filter_by(employee_id=employee_id).count()        
+        print(f"Found {count} entries for employee ID {employee_id}")
         return count
     except Exception as e:
         print(f"Error counting entries for employee ID {employee_id}: {e}")
         return 0
 
-def sum_hours_by_role_from_db(employee_id):
-    """
-    Fetches all entries for a given employee from the database and sums up the hours for each role.
-    """
-    total_hours_by_role = {}
+def retrieve_all_db_events_for_employee(employee_id, session=db.session):    
     try:
-        events = db.session.query(Event).filter_by(employee_id=employee_id).all()
-        for event in events:
-            role = event.position
-            hours = float(event.duration)  # Ensure hours is a float
-
-            if role in total_hours_by_role:
-                total_hours_by_role[role] += hours
-            else:
-                total_hours_by_role[role] = hours
-        print(f"Summed hours by role for employee ID {employee_id}: {total_hours_by_role}")
+        events = session.query(Event).filter_by(employee_id=employee_id).all()
+        return events
     except Exception as e:
-        print(f"Error summing hours by role for employee ID {employee_id}: {e}")
+        print(f"Error retrieving all entries for employee ID {employee_id}: {e}")
+        return []
 
-    return total_hours_by_role
 
-def get_employee_id(email):
+def get_employee_id(email,session=db.session):
     """
     Retrieves the employee ID using the provided email.
     """
     try:
-        employee = db.session.query(Employee).filter_by(email=email).first()
-        if employee:
-            print(f"Found employee ID {employee.id} for email {email}")
-            return employee.id
-        else:
+        employee = session.query(Employee).filter_by(email=email).first()
+        if not employee:            
             print(f"No employee found for email {email}")
             return None
+        
+        return employee.id        
+        
     except Exception as e:
         print(f"Error retrieving employee ID for email {email}: {e}")
         return None
 
-def get_events_for_employee_by_date(employee_id, date):
+def get_events_for_employee_by_date(employee_id, date,session = db.session):
     """
-    Fetches events from the database for a given employee on a specific date.
+    Fetches all events from the database for a given employee on a specific date.
 
     :param employee_id: ID of the employee
     :param date: The date of the event
-    :return: The database row for the event, or None if no event is found
+    :return: A list of database rows for the events, or an empty list if no events are found
     """
     try:
-        event = db.session.query(Event).filter_by(employee_id=employee_id, date=date).first()
-        if event:
-            print(f"Found event for employee ID {employee_id} on date {date}")
-        else:
-            print(f"No event found for employee ID {employee_id} on date {date}")
-        return event
+        events = session.query(Event).filter_by(employee_id=employee_id, date=date).all()
+        if not events:
+            print(f"No events found for employee ID {employee_id} on date {date}")
+           
+        # print(f"Found {len(events)} events for employee ID {employee_id} on date {date}")
+        return events        
+    
     except Exception as e:
-        print(f"Error retrieving event for employee ID {employee_id} on date {date}: {e}")
-        return None
+        print(f"Error retrieving events for employee ID {employee_id} on date {date}: {e}")
+        return []
+    
+
+
+def sum_hours_by_role_from_db(employee_id,session=db.session):
+    """
+    Fetches all entries for a given employee from the database and sums up the hours for each role.
+    """
+    total_hours_by_role = {}
+    
+    events = retrieve_all_db_events_for_employee(employee_id, session)
+    
+    for event in events:        
+        role = event.position
+        hours = float(event.duration)  # Ensure hours is a float
+
+        if role in total_hours_by_role:
+            total_hours_by_role[role] += hours
+        else:
+            total_hours_by_role[role] = hours        
+    
+    return total_hours_by_role
+
+
+from datetime import datetime
+
+def get_events_for_month(employee_id: int, month_year: str, session=db.session):
+    """
+    Retrieves all events for a specific employee within a given month.
+
+    :param employee_id: The ID of the employee.
+    :param month_year: The month and year in 'MM/YYYY' format (e.g., '12/2023').
+    :return: A list of dictionaries, each representing an event.
+    """
+    try:
+        # check to ensure it can cover the end of the month
+        # Reformat the month_year input to match the database format
+        start_date = datetime.strptime(month_year, '%m/%Y').strftime('%Y-%m-01')
+        end_date = datetime.strptime(month_year, '%m/%Y').strftime('%Y-%m-31')
+
+        # Query the database for events within the specified month
+        events = session.query(Event).filter(
+            Event.employee_id == employee_id,
+            Event.date >= start_date,
+            Event.date <= end_date
+        ).all()
+
+        # Format the results
+        formatted_events = [
+            {
+                "date": event.date.strftime('%m/%d/%Y'),
+                "hours": float(event.duration),
+                "position": event.position,
+                "location": event.location
+            }
+            for event in events
+        ]
+        
+        return formatted_events
+
+    except Exception as e:
+        print(f"Error retrieving events for employee ID {employee_id} in month {month_year}: {e}")
+        return []
