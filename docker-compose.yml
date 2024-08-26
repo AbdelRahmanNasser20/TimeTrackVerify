@@ -1,13 +1,13 @@
 version: '3.8'
 
 services:
-  frontend:
+  front:
     build:
-      context: ./frontend
+      context: ./front
     volumes:
-      - ./frontend:/app  # Maps the local frontend directory to the container
+      - ./front:/app  # Maps the local front directory to the container
     ports:
-      - "3000:80"  # Set the port directly
+      - "3000:3000"  # Set the port directly
     networks:
       - app-network
     environment:
@@ -39,7 +39,13 @@ services:
       - "5432:5432"
     networks:
       - app-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./local_db_backup.dump:/docker-entrypoint-initdb.d/local_db_backup.dump
 
 networks:
   app-network:
     driver: bridge
+
+volumes:
+  postgres_data:
