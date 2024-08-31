@@ -1,22 +1,19 @@
 version: '3.8'
 
 services:
-  # front:
-  #   build:
-  #     context: ./front
-  #   volumes:
-  #     - ./front:/app
-  #   ports:
-  #     - "${FRONTEND_PORT}:${FRONTEND_PORT}"
-  #   networks:
-  #     - app-network
-  #   environment:
-  #     - NODE_ENV=${NODE_ENV}
-  #     - REACT_APP_API_URL=${REACT_APP_API_URL}          
-  #     - FLASK_ENV: production
-  #     - FLASK_APP: run.py
-  #     - DATABASE_URL: postgresql://abdelnasser:greatness@db:5432/mydatabase
-      
+  front:
+    build:
+      context: ./front
+    volumes:
+      - ./front:/app
+    ports:
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+    networks:
+      - app-network
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - REACT_APP_API_URL=${REACT_APP_API_URL}          
+
   backend:
     build:
       context: ./backend
@@ -43,9 +40,7 @@ services:
       - app-network
     volumes:
       - postgres_data:/var/lib/postgresql/data      
-      - ./mydatabase.dump:/docker-entrypoint-initdb.d/mydatabase.dump
-    # entrypoint: sh -c "python scripts/send_timesheet_data.py && python run.py"
-
+      - ./mydatabase1.dump:/docker-entrypoint-initdb.d/mydatabase1.dump
 
 networks:
   app-network:
