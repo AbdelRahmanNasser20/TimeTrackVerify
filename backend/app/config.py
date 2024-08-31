@@ -14,9 +14,9 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', dev_database)
     
 
-# class ProductionConfig(Config):
-#     """Production configuration with settings optimized for performance and security."""
-#     SQLALCHEMY_DATABASE_URI = os.getenv('HEROKU_DATABASE_URL', dev_database)    
+class ProductionConfig(Config):
+    """Production configuration with settings optimized for performance and security."""
+    SQLALCHEMY_DATABASE_URI = os.getenv('HEROKU_DATABASE_URL', dev_database)    
 
 class TestingConfig(Config):
     """Testing configuration with settings optimized for testing."""

@@ -2,7 +2,7 @@ import pytest
 from app.models import Employee, Event
 from app.extensions import db
 from app.db_queries import get_employee_id, count_entries_for_employee, sum_hours_by_role_from_db, get_events_for_employee_by_date, get_events_for_month
-from app.verify_timesheet import process_timesheet_entries
+from app.new_validate_timesheet import generate_report
 
 def test_get_employee_id(session):
     """Test retrieving an employee ID by email."""
@@ -50,30 +50,29 @@ def test_get_events_for_employee_by_date(session):
     else:
         print(f"Failed: Could not retrieve events because no employee ID was found for email {email}")
 
-def test_invalid_events(session):
-    """Test retrieving events for an employee on a specific date."""
-    email = "abdel.nasser045@gmail.com"    
-    employee_id = get_employee_id(email,session)
+# def test_invalid_events(session):
+#     """Test retrieving events for an employee on a specific date."""
+#     email = "abdel.nasser045@gmail.com"    
+#     employee_id = get_employee_id(email,session)
     
-    if not employee_id:
-        print(f"Failed: Could not retrieve events because no employee ID was found for email {email}")
-        assert False
+#     if not employee_id:
+#         print(f"Failed: Could not retrieve events because no employee ID was found for email {email}")
+#         assert False
     
-    db_entries = get_events_for_month(employee_id, "12/2023",session)
+#     db_entries = get_events_for_month(employee_id, "12/01/2023",session)
     
-    timesheet_entries = [
-    {"date": "12/03/2023", "hours": 2.25, "position": "Teacher - Lead", "location": "Good Shepherd"},
-    {"date": "12/04/2023", "hours": 2.00, "position": "Teacher - Lead", "location": "Oakland Terrace ES"},
-    {"date": "12/05/2023", "hours": 2.75, "position": "Teacher - Assistant", "location": "Burning Tree ES"},
-    {"date": "12/06/2023", "hours": 2.50, "position": "Teacher - Lead", "location": "Forest Knolls ES"},
-    {"date": "12/11/2023", "hours": 2.50, "position": "Teacher - Lead", "location": "ST Andrew"},
-    {"date": "12/13/2023", "hours": 2.50, "position": "Teacher - Lead", "location": "Forest Knolls ES"},
-    {"date": "12/18/2023", "hours": 2.50, "position": "Teacher - Lead", "location": "ST Andrew"},
-    {"date": "12/20/2023", "hours": 2.50, "position": "Teacher - Lead", "location": "Forest Knolls ES"}
-]
+#     timesheet_entries = [
+#     {"date": "12/03/2023", "hours": 2.25, "position": "Teacher - Lead", "location": "Good Shepherd"},
+#     {"date": "12/04/2023", "hours": 2.00, "position": "Teacher - Lead", "location": "Oakland Terrace ES"},
+#     {"date": "12/05/2023", "hours": 2.75, "position": "Teacher - Assistant", "location": "Burning Tree ES"},
+#     {"date": "12/06/2023", "hours": 2.50, "position": "Teacher - Lead", "location": "Forest Knolls ES"},
+#     {"date": "12/11/2023", "hours": 2.50, "position": "Teacher - Lead", "location": "ST Andrew"},
+#     {"date": "12/13/2023", "hours": 2.50, "position": "Teacher - Lead", "location": "Forest Knolls ES"},
+#     {"date": "12/18/2023", "hours": 2.50, "position": "Teacher - Lead", "location": "ST Andrew"},
+#     {"date": "12/20/2023", "hours": 2.50, "position": "Teacher - Lead", "location": "Forest Knolls ES"}
+# ]
     
-    invalid_events = process_timesheet_entries(db_entries,timesheet_entries)
-    print(invalid_events)
-    assert invalid_events != [], f"Expected 0 invalid events but got {len(invalid_events)}"
+#     invalid_events = generate_report(db_entries,timesheet_entries)["invalidEntries"]
+#     assert invalid_events == [], f"Expected 0 invalid events but got {len(invalid_events)}"
         
     

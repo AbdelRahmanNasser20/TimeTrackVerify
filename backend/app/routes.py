@@ -3,7 +3,8 @@ from datetime import datetime
 from sqlalchemy import text
 from .extensions import db
 from .db_queries import get_employee_id, retrieve_all_db_events_for_employee
-from .verify_timesheet import prepare_report_data, process_timesheet_entries
+# from .verify_timesheet import prepare_report_data, process_timesheet_entries
+from .new_validate_timesheet import generate_report
 import os
 
 api = Blueprint('api', __name__)
@@ -25,7 +26,9 @@ def get_status():
 @api.route('/verify', methods=['POST'])
 def verify_timesheet():
     try:
+        
         data = request.get_json()
+        print(f"Received data")
 
         if not data or 'tableData' not in data or 'email' not in data:
             return jsonify({'error': True, 'message': 'Invalid request payload'}), 400
@@ -42,14 +45,15 @@ def verify_timesheet():
         employee_id = get_employee_id(email)
         
         if employee_id is None:
-            return jsonify({'error': True, 'message': 'Email not found in the database'}), 403
-        
-        report = prepare_report_data(employee_id, timesheet_entries)
-        invalid_entries = process_timesheet_entries(retrieve_all_db_events_for_employee(employee_id), timesheet_entries)
+            return jsonify({'error': True, 'message': 'Email not found in the database'}), 403        
 
+        print("Generating report", timesheet_entries)
+        report = generate_report(employee_id, timesheet_entries)        
+
+        print(f"Generated report: {report}")
         report["emailFound"] = True
 
-        return jsonify({"report": report, "invalidEntries": invalid_entries}), 200
+        return jsonify({"report": report}), 200
 
     except Exception as e:
         print(f"An error occurred: {e}")

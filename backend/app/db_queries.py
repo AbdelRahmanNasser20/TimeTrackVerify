@@ -1,3 +1,6 @@
+from calendar import monthrange
+
+from pytest import Session
 from .models import Employee, Event
 from .extensions import db
 
@@ -12,16 +15,7 @@ def count_entries_for_employee(employee_id, session=db.session):
     except Exception as e:
         print(f"Error counting entries for employee ID {employee_id}: {e}")
         return 0
-
-def retrieve_all_db_events_for_employee(employee_id, session=db.session):    
-    try:
-        events = session.query(Event).filter_by(employee_id=employee_id).all()
-        return events
-    except Exception as e:
-        print(f"Error retrieving all entries for employee ID {employee_id}: {e}")
-        return []
-
-
+    
 def get_employee_id(email,session=db.session):
     """
     Retrieves the employee ID using the provided email.
@@ -38,6 +32,14 @@ def get_employee_id(email,session=db.session):
         print(f"Error retrieving employee ID for email {email}: {e}")
         return None
 
+def retrieve_all_db_events_for_employee(employee_id, session=db.session):    
+    try:
+        events = session.query(Event).filter_by(employee_id=employee_id).all()
+        return events
+    except Exception as e:
+        print(f"Error retrieving all entries for employee ID {employee_id}: {e}")
+        return []
+    
 def get_events_for_employee_by_date(employee_id, date,session = db.session):
     """
     Fetches all events from the database for a given employee on a specific date.
@@ -59,7 +61,6 @@ def get_events_for_employee_by_date(employee_id, date,session = db.session):
         return []
     
 
-
 def sum_hours_by_role_from_db(employee_id,session=db.session):
     """
     Fetches all entries for a given employee from the database and sums up the hours for each role.
@@ -70,7 +71,7 @@ def sum_hours_by_role_from_db(employee_id,session=db.session):
     
     for event in events:        
         role = event.position
-        hours = float(event.duration)  # Ensure hours is a float
+        hours = event.hours
 
         if role in total_hours_by_role:
             total_hours_by_role[role] += hours
@@ -82,32 +83,49 @@ def sum_hours_by_role_from_db(employee_id,session=db.session):
 
 from datetime import datetime
 
-def get_events_for_month(employee_id: int, month_year: str, session=db.session):
+def get_events_for_month(employee_id: int, date_input: str or datetime.date, session: Session = db.session):
     """
-    Retrieves all events for a specific employee within a given month.
+    Retrieves all events for a specific employee within the month of the given date.
 
     :param employee_id: The ID of the employee.
-    :param month_year: The month and year in 'MM/YYYY' format (e.g., '12/2023').
+    :param date_str: A date in 'MM/DD/YYYY' format (e.g., '12/03/2023').
+    :param session: SQLAlchemy session object.
     :return: A list of dictionaries, each representing an event.
     """
     try:
-        # check to ensure it can cover the end of the month
-        # Reformat the month_year input to match the database format
-        start_date = datetime.strptime(month_year, '%m/%Y').strftime('%Y-%m-01')
-        end_date = datetime.strptime(month_year, '%m/%Y').strftime('%Y-%m-31')
 
-        # Query the database for events within the specified month
+        print('date_input',date_input)
+         # Determine if the input is a string or a datetime.date object
+        if isinstance(date_input, str):
+            # Try to parse as 'YYYY-MM-DD' first
+            try:
+                input_date = datetime.strptime(date_input, '%Y-%m-%d').date()
+            except ValueError:
+                # If that fails, try to parse as 'MM/DD/YYYY'
+                input_date = datetime.strptime(date_input, '%m/%d/%Y').date()
+        elif isinstance(date_input, datetime.date):
+            input_date = date_input
+        else:
+            raise ValueError("Invalid date format. Please use 'YYYY-MM-DD' or 'MM/DD/YYYY' or a date object.")
+        
+        print('input_date',input_date)
+        first_day_of_month = input_date.replace(day=1)
+        last_day_of_month = input_date.replace(day=monthrange(input_date.year, input_date.month)[1])
+
+
+        # Query the database for events within the specified date range
         events = session.query(Event).filter(
             Event.employee_id == employee_id,
-            Event.date >= start_date,
-            Event.date <= end_date
+            Event.date >= first_day_of_month,
+            Event.date <= last_day_of_month
         ).all()
+        
 
         # Format the results
         formatted_events = [
             {
-                "date": event.date.strftime('%m/%d/%Y'),
-                "hours": float(event.duration),
+                "date": event.date.strftime('%Y-%m-%d'),
+                "hours": event.hours,
                 "position": event.position,
                 "location": event.location
             }
@@ -116,6 +134,75 @@ def get_events_for_month(employee_id: int, month_year: str, session=db.session):
         
         return formatted_events
 
+    except ValueError as e:
+        print(f"An error occurred: {e}")
+        raise
+    
     except Exception as e:
-        print(f"Error retrieving events for employee ID {employee_id} in month {month_year}: {e}")
+        print(f"An error occurred: {e}")
+        raise
+        
+
+
+def get_event_by_date_position(employee_id, date, position, hours = 0, session=db.session):
+    """
+    Retrieves a specific event from the database based on date, position, and duration.
+
+    :param employee_id: The ID of the employee.
+    :param date: The date of the event.
+    :param position: The position of the event.
+    :param hours: The hours of the event.
+    :return: The matching Event object or None if not found.
+    """
+    try:
+        event = session.query(Event).filter_by(
+            employee_id=employee_id,
+            date=date,
+            position=position,
+        ).first()
+
+        if event:
+            # Format the date in MM/DD/YYYY format
+            event.date = event.date.strftime('%Y-%m-%d')
+        return event
+    except ValueError as e:
+        print(f"An error occurred: {e}")
+        raise  # Re-raise the exception to ensure the test catches it
+    except TypeError as e:
+        print(f"An error occurred: {e}")
+        raise  # Re-raise the exception to ensure the test catches it
+
+    
+
+def get_events_by_date(employee_id, date, session=db.session):
+    """
+    Retrieves all events for a specific employee on a given date.
+
+    :param employee_id: The ID of the employee.
+    :param date: The date of the events.
+    :return: A list of Event objects.
+    """
+    try:
+        events = session.query(Event).filter_by(
+            employee_id=employee_id,
+            date=date
+        ).all()
+        
+        # Format the dates in MM/DD/YYYY format
+        formatted_events = []
+        for event in events:
+            formatted_event = {
+                "date": event.date.strftime('%Y-%m-%d'),
+                "hours": event.hours,
+                "position": event.position,
+                "location": event.location
+            }
+            formatted_events.append(formatted_event)
+
+        if not events:
+            print(f"No events found for employee ID {employee_id} on date {date}")
+
+        return formatted_events
+    except Exception as e:
+        print(f"Error retrieving events for date {date}: {e}")
         return []

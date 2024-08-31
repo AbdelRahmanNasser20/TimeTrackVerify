@@ -20,13 +20,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application code into the container
 COPY . .
 
+# Copy the rest of the application code into the container
+COPY . /app
+
 # Expose the port your application runs on
 EXPOSE 5001
 
-ENV FLASK_ENV=production
+ENV FLASK_ENV=development
 
-# Copy and run the script
-COPY scripts/send_timesheet_data.py /app/send_timesheet_data.py
-
-# Run the script after starting the Flask app
-CMD ["sh", "-c", "python run.py && python scripts/send_timesheet_data.py"]
+# Run the Flask app and then the test script
+CMD ["sh", "-c", "python run.py & sleep 5 && python /app/test_script.py"]

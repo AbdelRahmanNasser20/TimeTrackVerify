@@ -14,7 +14,7 @@ class Employee(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
     email = db.Column(db.String, nullable=False, unique=True)
-    phone_number = db.Column(db.String, nullable=True)  # New column for phone number
+    phone_number = db.Column(db.String, nullable=True)
 
     events = db.relationship("Event", back_populates="employee")
 
@@ -28,19 +28,17 @@ class Event(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     employee_id = db.Column(db.Integer, db.ForeignKey('employees.id'))
     name = db.Column(db.String, nullable=False)
-    date = db.Column(db.TIMESTAMP, nullable=False)
-    duration = db.Column(db.String, nullable=False)
+    date = db.Column(db.DATE, nullable=False)  # Changed from TIMESTAMP to DATE
+    hours = db.Column(db.Float, nullable=False)  # Renamed from duration to hours
     position = db.Column(db.String, nullable=False)
     location = db.Column(db.String, nullable=False)
 
     employee = db.relationship("Employee", back_populates="events")
 
     def __repr__(self):
-        return (f'<Event name={self.name}, date={self.date}, duration={self.duration}, '
+        return (f'<Event name={self.name}, date={self.date}, hours={self.hours}, '
                 f'position={self.position}, location={self.location}, '
                 f'employee_id={self.employee_id}>')
-
-
 # from sqlalchemy import Column, Integer, String, ForeignKey
 # from sqlalchemy.ext.declarative import declarative_base
 # from sqlalchemy.orm import relationship

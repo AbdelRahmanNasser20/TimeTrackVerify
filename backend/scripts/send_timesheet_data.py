@@ -2,7 +2,9 @@ import requests
 import json
 
 # Define the API endpoint
-url = "http://127.0.0.1:5001/verify"
+# url = "backend:5001/verify"
+url = "http://backend:5001/verify"
+
 
 # Define the data to be sent in the POST request
 data = {

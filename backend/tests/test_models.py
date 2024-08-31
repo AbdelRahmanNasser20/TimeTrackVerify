@@ -30,7 +30,7 @@ def test_event_model(db):
     columns = inspector.get_columns('events')
     column_names = {column['name'] for column in columns}
     
-    expected_columns = {'id', 'employee_id', 'name', 'date', 'duration', 'position', 'location'}
+    expected_columns = {'id', 'employee_id', 'name', 'date', 'hours', 'position', 'location'}
     missing_columns = expected_columns - column_names
     assert not missing_columns, f"Missing columns in 'events' table: {missing_columns}"
 

@@ -34,7 +34,7 @@ def test_add_event(session):
     session.commit()
 
     new_event = Event(
-        name='Conference', date='2024-07-01', duration='3.0',
+        name='Conference', date='2024-07-01', hours='3.0',
         position='Speaker', location='Auditorium', employee_id=employee.id
     )
     session.add(new_event)
@@ -50,11 +50,11 @@ def test_count_entries_for_employee(session):
     session.commit()
 
     event1 = Event(
-        name='Meeting', date='2024-06-20', duration='1.0',
+        name='Meeting', date='2024-06-20', hours='1.0',
         position='Manager', location='Office', employee_id=employee.id
     )
     event2 = Event(
-        name='Workshop', date='2024-06-21', duration='2.5',
+        name='Workshop', date='2024-06-21', hours='2.5',
         position='Teacher', location='Conference Room', employee_id=employee.id
     )
     session.add(event1)
@@ -71,11 +71,11 @@ def test_retrieve_all_db_events_for_employee(session):
     session.commit()
 
     event1 = Event(
-        name='Meeting', date='2024-06-20', duration='1.0',
+        name='Meeting', date='2024-06-20', hours='1.0',
         position='Manager', location='Office', employee_id=employee.id
     )
     event2 = Event(
-        name='Workshop', date='2024-06-21', duration='2.5',
+        name='Workshop', date='2024-06-21', hours='2.5',
         position='Teacher', location='Conference Room', employee_id=employee.id
     )
     session.add(event1)
@@ -100,7 +100,7 @@ def test_get_events_for_employee_by_date(session):
     session.commit()
 
     event = Event(
-        name='Meeting', date='2024-06-20', duration='1.0',
+        name='Meeting', date='2024-06-20', hours='1.0',
         position='Manager', location='Office', employee_id=employee.id
     )
     session.add(event)
@@ -117,7 +117,7 @@ def test_remove_event(session):
     session.commit()
 
     event = Event(
-        name='Meeting', date='2024-06-20', duration='1.0',
+        name='Meeting', date='2024-06-20', hours='1.0',
         position='Manager', location='Office', employee_id=employee.id
     )
     session.add(event)

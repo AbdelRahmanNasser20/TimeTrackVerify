@@ -96,18 +96,19 @@ def upload_excel(file_path):
     total_entries = len(df)
     incorrect_count = len(incorrect_entries)
 
-    print("Incorrect Entries:")
-    for entry in incorrect_entries:
-        print(entry)
-    print(f"\nTotal Entries: {total_entries}")
-    print(f"Incorrect Entries: {incorrect_count}\n")
+    # print("Incorrect Entries:")
+    # for entry in incorrect_entries:
+    #     print(entry)
+    # print(f"\nTotal Entries: {total_entries}")
+    # print(f"Incorrect Entries: {incorrect_count}\n")
 
     with app.app_context():
         employees_dict = retrieve_employees()
         
         for row in correct_entries:
             subject = row.iloc[0]
-            date = row.iloc[1]
+            date = row.iloc[1].strftime('%m-%d-%Y')
+            
             location = row.iloc[2]
             organizer = row.iloc[3]
 
@@ -119,7 +120,7 @@ def upload_excel(file_path):
                 continue
 
             for info in parsed_info:
-                name, position, duration = info
+                name, position, hours = info
                 employee_name, employee_email, employee_id = find_closest_employee(name, employees_dict)
 
                 if employee_id is None:
@@ -130,7 +131,7 @@ def upload_excel(file_path):
                     employee_id=employee_id,
                     name=employee_name,
                     date=date,
-                    duration=duration,
+                    hours=hours,
                     position=position,
                     location=location
                 )                
