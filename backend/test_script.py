@@ -5,6 +5,7 @@ import json
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from app.models import Employee, Event
+from app.db_queries import get_employee_id
 
 # Function to print all environment variables
 def print_env_variables():
@@ -16,8 +17,9 @@ def print_env_variables():
 # Test the backend API
 def test_api():
     api_url = os.getenv('API_URL', 'http://backend:5001/verify')  # Use the service name 'backend'
+    email = "abdel.nasser045@gmail.com"
     data = {
-        "email": "abdel.nasser045@gmail.com",
+        "email": email,
         "tableData": [             
                     {"date": '2023-12-03', "hours": 2.25, "location": 'Good Shepherd ', "position": 'Teacher - Lead'} ,            
                     {"date": '2023-12-04', "hours": 2, "location": 'Oakland Terrace ES', "position": 'Teacher - Lead'},                
@@ -26,6 +28,9 @@ def test_api():
                     {"date": '2023-12-11', "hours": 2.5, "location": 'ST andrew', "position": 'Teacher - Lead'},
         ]
     }
+    id = get_employee_id(email)
+    print(" the email for ", email , " with employee id " , id)
+
 
     try:
         response = requests.post(api_url, headers={"Content-Type": "application/json"}, data=json.dumps(data))
