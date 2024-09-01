@@ -1,6 +1,7 @@
 on: push
 jobs:
- first-job:    
+ first-job:
+  run-ons: window-latest
   steps:
     - run : node --version
     - run: npm --version
