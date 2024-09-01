@@ -12,21 +12,33 @@ services:
       - app-network
     environment:
       - NODE_ENV=${NODE_ENV}
-      - REACT_APP_API_URL=${REACT_APP_API_URL}          
+      - REACT_APP_API_URL= ${REACT_APP_API_URL}          
+    depends_on:
+      - backend
+    # restart: always
 
   backend:
     build:
       context: ./backend
     volumes:
       - ./backend:/app
+    command: gunicorn -b 0.0.0.0:5001 run:app
+
     ports:
       - "${BACKEND_PORT}:${BACKEND_PORT}"
     networks:
       - app-network
     environment:
-      - DATABASE_URL=postgresql://abdelnasser:greatness@db:5432/mydatabase
+      - DOCKER_DATABASE_URL=postgresql://abdelnasser:greatness@db:5432/mydatabase
     depends_on:
       - db
+    # restart: always
+    # healthcheck:
+    #   test: ["CMD-SHELL", "curl -f http://localhost:5001/health || exit 1"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
+    #   start_period: 5s
 
   db:
     image: postgres:latest
@@ -40,8 +52,29 @@ services:
       - app-network
     volumes:
       - postgres_data:/var/lib/postgresql/data      
-      - ./mydatabase1.dump:/docker-entrypoint-initdb.d/mydatabase1.dump
+      - ./init:/docker-entrypoint-initdb.d  # Mount init scripts
 
+      # - ./mydatabase.dump:/docker-entrypoint-initdb.d/mydatabase.dump
+    restart: always
+    
+    # healthcheck:
+    #   test: ["CMD-SHELL", "pg_isready -U $POSTGRES_DB"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
+    #   start_period: 5s
+  
+  # tests:
+  #   build:
+  #     context: ./backend
+  #   command: sh -c "./wait-for-it.sh backend:5001 -- pytest"
+  #   networks:
+  #     - app-network
+  #   depends_on:
+  #     backend:
+  #       condition: service_healthy
+  #     # db:
+  #     #   condition: service_healthy
 networks:
   app-network:
     driver: bridge

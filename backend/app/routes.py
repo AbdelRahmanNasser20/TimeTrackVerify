@@ -13,6 +13,12 @@ api = Blueprint('api', __name__)
 def get_message():
     return jsonify(message="Hello from Flask!")
 
+
+
+@api.route('/api/check_db_connection')
+def db_connection():
+    return jsonify(message="Hello from Flask!", status = "success", status_code = 200)
+
 @api.route('/api/time')
 def get_time():
     current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')

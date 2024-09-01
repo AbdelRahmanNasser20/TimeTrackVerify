@@ -19,6 +19,6 @@ def make_shell_context():
 
 
 if __name__ == '__main__':
-    debug_mode = os.getenv('DEBUG', 'True') == 'True'        
+    # debug_mode = os.getenv('DEBUG', 'True') == 'True'        
     # print("WE ARE RUNNING DB:",  app.config['SQLALCHEMY_DATABASE_URI'])        
-    app.run(host='0.0.0.0', debug=debug_mode, port=5001)
+    app.run(host='0.0.0.0', port=5001)

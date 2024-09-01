@@ -22,7 +22,7 @@ This command will build the Docker images and start all services (frontend, back
 Access the Services:
 
 Frontend: http://localhost:3000
-Backend: http://localhost:5000
+Backend: http://localhost:5001
 PostgreSQL: localhost:5432
 Running Services Individually (Without Docker)
 Prerequisites

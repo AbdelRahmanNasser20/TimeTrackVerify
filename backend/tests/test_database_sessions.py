@@ -53,8 +53,9 @@ def test_environment_variables(app):
     
     elif flask_env == 'production':
         assert os.getenv('FLASK_ENV') == 'production', "FLASK_ENV should be set to 'production'"
-        assert os.getenv('DEBUG') == 'False', "DEBUG should be 'False' in production"
-        assert os.getenv('HEROKU_DATABASE_URL'), "HEROKU_DATABASE_URL should be set in production"
+        # assert os.getenv('DEBUG') == 'False', "DEBUG should be 'False' in production"
+        assert os.getenv('DOCKER_DATABASE_URL'), "HEROKU_DATABASE_URL should be set in production"
+        
         print("Success: Production environment variables are correctly set.")
     
     elif flask_env == 'testing':

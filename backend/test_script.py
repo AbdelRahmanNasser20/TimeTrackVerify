@@ -5,7 +5,9 @@ import json
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from app.models import Employee, Event
-from app.db_queries import get_employee_id
+from app.db_queries import get_employee_id, get_events_for_month
+
+email = "abdel.nasser045@gmail.com"
 
 # Function to print all environment variables
 def print_env_variables():
@@ -17,7 +19,6 @@ def print_env_variables():
 # Test the backend API
 def test_api():
     api_url = os.getenv('API_URL', 'http://backend:5001/verify')  # Use the service name 'backend'
-    email = "abdel.nasser045@gmail.com"
     data = {
         "email": email,
         "tableData": [             
@@ -28,9 +29,6 @@ def test_api():
                     {"date": '2023-12-11', "hours": 2.5, "location": 'ST andrew', "position": 'Teacher - Lead'},
         ]
     }
-    id = get_employee_id(email)
-    print(" the email for ", email , " with employee id " , id)
-
 
     try:
         response = requests.post(api_url, headers={"Content-Type": "application/json"}, data=json.dumps(data))
@@ -47,30 +45,37 @@ def test_api():
 def test_database():
     try:
         # Setup database connection
-        DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://abdelnasser:greatness@db:5432/mydatabase')
+        DATABASE_URL = os.getenv('DATABASE_URL')
+        print("Lets see what we are getting " , DATABASE_URL)
+        DATABASE_URL = 'postgresql://abdelnasser:greatness@db:5432/mydatabase'
         engine = create_engine(DATABASE_URL)
         Session = sessionmaker(bind=engine)
         session = Session()
-
+        
         # Get all employees
         employees = session.query(Employee).all()
-        print("Employees:")
-        for employee in employees:
-            print(employee)
+        # print("Employees:")
+        # for employee in employees:
+        #     print(employee)
 
         # Get the first 15 events
-        events = session.query(Event).all()[:15]
-        print("\nFirst 15 Events:")
-        for event in events:
-            print(event)
+        # events = session.query(Event).all()[:15]
+        # print("\nFirst 15 Events:")
+        # for event in events:
+        #     print(event)
 
         # Get events for the employee with ID 1
-        events_for_employee_1 = session.query(Event).filter_by(employee_id=1).all()
+        email = "abdel.nasser045@gmail.com"
+        id = get_employee_id(email,session)
+        print(" the email for ", email , " with employee id " , id)        
+
+        events_for_employee_1 = get_events_for_month(1,"2023-12-05", session)
         print("\nEvents for Employee ID 1:")
         for event in events_for_employee_1:
             print(event)
 
         session.close()
+        
 
     except Exception as e:
         print(f"Database Test Failed: An error occurred: {e}")
@@ -78,9 +83,9 @@ def test_database():
 if __name__ == "__main__":
     print("Running Environment Variables Check...")
     print_env_variables()  # Print all environment variables
-
-    print("Running API Test...")
-    test_api()
     
     print("\nRunning Database Test...")
     test_database()
+
+    print("Running API Test...")
+    test_api()

@@ -17,6 +17,9 @@ COPY requirements.txt .
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
+RUN pip install gunicorn
+
+
 # Copy the rest of the application code into the container
 COPY . .
 
@@ -26,7 +29,10 @@ COPY . /app
 # Expose the port your application runs on
 EXPOSE 5001
 
-ENV FLASK_ENV=development
+ENV FLASK_ENV=production
+
 
 # Run the Flask app and then the test script
-CMD ["sh", "-c", "python run.py & sleep 5 && python /app/test_script.py"]
+# CMD ["sh", "-c", "python run.py & sleep 5 && python /app/test_script.py"]
+CMD ["gunicorn","-b", "0.0.0.0:5001", "run:app"]
+

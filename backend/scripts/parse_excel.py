@@ -17,6 +17,9 @@ print("Current Directory:", os.getcwd())
 
 print(os.path)
 app = create_app('development')
+app
+
+
 
 MOE_EMAIL = "m.fouladi99@gmail.com"
 
