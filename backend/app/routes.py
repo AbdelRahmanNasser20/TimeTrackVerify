@@ -2,12 +2,13 @@ from flask import Blueprint, jsonify, request
 from datetime import datetime
 from sqlalchemy import text
 from .extensions import db
-from .db_queries import get_employee_id, retrieve_all_db_events_for_employee
+from .db_queries import get_employee_id
 # from .verify_timesheet import prepare_report_data, process_timesheet_entries
 from .new_validate_timesheet import generate_report
 import os
 
 api = Blueprint('api', __name__)
+
 
 @api.route('/api/message')
 def get_message():
