@@ -21,7 +21,13 @@ app = create_app('development')
 MOE_EMAIL = "m.fouladi99@gmail.com"
 
 # Updated pattern to match the provided formats
-PATTERN = r"((\w+ [\w-]+\.? \(\w+ \d\.\d{1,2}\))|(Moe))( & (\w+ [\w-]+\.? \(\w+ \d\.\d{1,2}\)|Moe))* @ .+"
+# PATTERN = r"((\w+ [\w-]+\.? \(\w+ \d\.\d{1,2}\))|(Moe))( & (\w+ [\w-]+\.? \(\w+ \d\.\d{1,2}\)|Moe))* @ .+"
+# PATTERN = r"((\w+ [\w-]+\.? \(\w+ \d\.\d{1,2}\))|(Moe))( & (\w+ [\w-]+\.? \(\w+ \d\.\d{1,2}\)|Moe))* @ \w+"
+# PATTERN = r"((\w+ [\w-]+\.? \(\w+ (\d?\.\d{1,2})\))|(Moe))( & (\w+ [\w-]+\.? \(\w+ (\d?\.\d{1,2})\)|Moe))* @ .+"
+PATTERN = r"((\w+ [\w-]+\.? \(\w+ (\d?\.\d{1,2})\))|(Moe))( & (\w+ [\w-]+\.? \(\w+ (\d?\.\d{1,2})\)|Moe))* @ .+"
+
+
+
 
 def parse_event_summary(string):
     """
@@ -60,14 +66,35 @@ def find_closest_employee(name, employees, similarity_threshold=0.5):
     if not employees:
         return None, None, None
 
+    # Split the provided name to extract the first letter of the last name
+    name_parts = name.split()
+    if len(name_parts) > 1:
+        name_last_initial = name_parts[-1][0].upper()  # Get the first letter of the last name
+    else:
+        name_last_initial = ''
+
+    # Find the closest match
     closest_names = difflib.get_close_matches(name, employees.keys(), n=1, cutoff=similarity_threshold)
     
     if closest_names:
         closest_name = closest_names[0]
         employee_info = employees[closest_name]
+
+        # Split the closest name to extract the first letter of the last name
+        closest_name_parts = closest_name.split()
+        if len(closest_name_parts) > 1:
+            closest_name_last_initial = closest_name_parts[-1][0].upper()  # Get the first letter of the last name
+        else:
+            closest_name_last_initial = ''
+        
+        # Check if the first letter of the last names match
+        if name_last_initial and closest_name_last_initial and name_last_initial != closest_name_last_initial:
+            print(f"Warning: First letter of the last name does not match. {closest_name} V.S {name}")
+            return None, None, None
+        
         return closest_name, employee_info['email'], employee_info['id']
-    else:
-        return None, None, None
+    
+    return None, None, None
 
 def retrieve_employees():
     """
@@ -80,42 +107,46 @@ def retrieve_employees():
             employees[employee.name] = {'id': employee.id, 'email': employee.email}
     return employees
 
-def upload_excel(file_path):
+def parse_excel(file_path):
     df = pd.read_excel(file_path)
     
     correct_entries = []
     incorrect_entries = []
 
-    for index, entry in df.iterrows():
-        print(entry)
-        subject = entry.iloc[0]
+    for index, row in df.iterrows():
+                
+        subject = row['Subject'] 
+        start_date = row['Start Date']
+        location = row['Location']
+        organizer = row['Meeting Organizer']
+        
         if re.match(PATTERN, subject):
-            correct_entries.append(entry)
+            correct_entries.append(row)
         else:
-            incorrect_entries.append(entry)
+            # print(f"{subject}")
+            incorrect_entries.append([index,subject])
 
     total_entries = len(df)
     incorrect_count = len(incorrect_entries)
 
     print("Incorrect Entries:")
-    # for entry in incorrect_entries:
-    #     print(entry)
-    # print(f"\nTotal Entries: {total_entries}")
-    # print(f"Incorrect Entries: {incorrect_count}\n")
+    for index, subject in incorrect_entries:
+        print(f"index: {index+2} Subject: {subject}")
+    print(f"\nTotal Entries: {total_entries}")
+    print(f"Incorrect Entries: {incorrect_count}\n")
 
     with app.app_context():
         employees_dict = retrieve_employees()
         
-        for entry in correct_entries:
-            subject = entry.iloc[0]
-            date = entry.iloc[1].strftime('%m-%d-%Y')
+        for row in correct_entries:
+            subject = row.iloc[0]
+            date = row.iloc[1].strftime('%m-%d-%Y')
             
-            location = entry.iloc[2]
-            organizer = entry.iloc[3]
+            location = row.iloc[2]
+            organizer = row.iloc[3]
 
             # Convert the date string to a datetime object
-            # event_date = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
-            # print(date, type(date))
+            # event_date = datetime.strptime(date, "%Y-%m-%d")            
             parsed_info = parse_event_summary(subject)
             if not parsed_info:
                 continue
@@ -144,8 +175,6 @@ def upload_excel(file_path):
         db.session.rollback()
 
 
-if __name__ == '__main__':
-    print("hello world")
+if __name__ == '__main__':    
     print(os.getcwd())
-    # upload_excel('data/December_2023_events.xlsm')
-    upload_excel('data/July 2024.xlsm')
+    parse_excel('data/July 2024.xlsm')
