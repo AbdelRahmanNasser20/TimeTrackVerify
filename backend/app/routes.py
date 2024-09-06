@@ -34,8 +34,7 @@ def get_status():
 def verify_timesheet():
     try:
         
-        data = request.get_json()
-        print(f"Received data")
+        data = request.get_json()        
 
         if not data or 'tableData' not in data or 'email' not in data:
             return jsonify({'error': True, 'message': 'Invalid request payload'}), 400
