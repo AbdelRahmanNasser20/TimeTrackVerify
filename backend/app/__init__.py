@@ -30,6 +30,7 @@ def create_app(config_name='development'):
 
     # Initialize Flask with the correct static folder
     app = Flask(__name__, static_folder=static_folder_path, static_url_path='/')
+    app.config.from_object(config_by_name[config_name])
     print("Static folder being used:", app.static_folder)
     # Serve React App for all other routes
     @app.route('/', defaults={'path': ''})
@@ -37,7 +38,6 @@ def create_app(config_name='development'):
     def serve_react_app(path):        
         return send_from_directory(app.static_folder, 'index.html')
     
-    app.config.from_object(config_by_name[config_name])
     CORS(app)
 
     # app = Flask(__name__)    
