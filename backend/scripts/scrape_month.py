@@ -89,7 +89,7 @@ def find_closest_employee(name, employees, similarity_threshold=0.5):
         
         # Check if the first letter of the last names match
         if name_last_initial and closest_name_last_initial and name_last_initial != closest_name_last_initial:
-            print(f"Warning: First letter of the last name does not match. {closest_name} V.S {name}")
+            # print(f"Warning: First letter of the last name does not match. {closest_name} V.S {name}")
             return None, None, None
         
         return closest_name, employee_info['email'], employee_info['id']

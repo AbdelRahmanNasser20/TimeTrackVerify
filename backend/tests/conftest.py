@@ -14,6 +14,7 @@ def app():
     """Setup Flask application for testing."""
 
     flask_env = os.getenv('FLASK_ENV')
+    print("The Env is " , flask_env)
     # Use the 'testing' configuration or whichever is appropriate
     if flask_env == 'testing':        
         # For testing, use SQLite in-memory database

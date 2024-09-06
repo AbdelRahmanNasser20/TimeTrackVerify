@@ -14,9 +14,8 @@ app = create_app(config_name)
 
 @app.shell_context_processor
 def make_shell_context():
+    
     return {'db': db, 'Employee': Employee, 'Event': Event, 'app': app}
-
-
 
 if __name__ == '__main__':
     # debug_mode = os.getenv('DEBUG', 'False') == 'True'        

@@ -14,9 +14,10 @@ from app.models import Employee, Event
 # Print the current working directory
 print("Current Directory:", os.getcwd())
 
+config_name = os.getenv('FLASK_ENV')
+app = create_app(config_name)
 
-print(os.path)
-app = create_app('development')
+SQLALCHEMY_DATABASE_URI = "postgres://u7rjm4v00r7o80:p29318c85fd890024aabb5af0d2eee671f3b489fceb0846bc261184455c66a610@cb5ajfjosdpmil.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com:5432/dcbccjj9ki7jbl"
 
 MOE_EMAIL = "m.fouladi99@gmail.com"
 
@@ -100,8 +101,8 @@ def upload_excel(file_path):
     print("Incorrect Entries:")
     # for entry in incorrect_entries:
     #     print(entry)
-    # print(f"\nTotal Entries: {total_entries}")
-    # print(f"Incorrect Entries: {incorrect_count}\n")
+    print(f"\nTotal Entries: {total_entries}")
+    print(f"Incorrect Entries: {incorrect_count}\n")
 
     with app.app_context():
         employees_dict = retrieve_employees()
@@ -137,7 +138,7 @@ def upload_excel(file_path):
                     location=location
                 )                
                 # print(event)
-                # db.session.add(event)
+                db.session.add(event)
 
 
         db.session.commit()
@@ -147,5 +148,5 @@ def upload_excel(file_path):
 if __name__ == '__main__':
     print("hello world")
     print(os.getcwd())
-    # upload_excel('data/December_2023_events.xlsm')
-    upload_excel('data/July 2024.xlsm')
+    upload_excel('data/December_2023_events.xlsm')
+    # upload_excel('data/July 2024.xlsm')

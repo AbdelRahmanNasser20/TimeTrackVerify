@@ -7,7 +7,17 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from app import create_app, db
 from app.models import Employee
 
-app = create_app('development')
+config_name = os.getenv('FLASK_ENV',)
+print("THIS IS ", config_name)
+# print("DATABASE_URL ", os.getenv('DATABASE_URL'))
+# print("HEROKU_DATABASE_URL, ", os.getenv('HEROKU_DATABASE_URL'))
+
+# print("SQLALCHEMY_DATABASE_URI" , os.getenv('SQLALCHEMY_DATABASE_URI'))
+# SQLALCHEMY_DATABASE_URI = "postgres://u7rjm4v00r7o80:p29318c85fd890024aabb5af0d2eee671f3b489fceb0846bc261184455c66a610@cb5ajfjosdpmil.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com:5432/dcbccjj9ki7jbl"
+
+app = create_app(config_name)
+
+
 
 teachers = [
     {"FirstName": "Abdel-Rahman", "LastName": "Nasser", "Email": "abdel.nasser045@gmail.com", "PhoneNumber": "2404766903", "Location": "Silver Spring"},
