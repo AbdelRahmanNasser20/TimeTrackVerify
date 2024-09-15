@@ -5,6 +5,8 @@ from .config import config_by_name
 from .extensions import db, migrate
 from .routes import api
 import os
+import logging
+
 # import os , sys
 
 # print("ALL DIRECTORIES ", os.path.dirname(__file__))
@@ -57,6 +59,12 @@ def create_app(config_name='development'):
 
     # Register blueprints
     app.register_blueprint(api)
-        
-        
+
+    
+        # Set up logging
+    if not app.debug:
+        # Log to stdout
+        gunicorn_logger = logging.getLogger('gunicorn.error')
+        app.logger.handlers = gunicorn_logger.handlers
+        app.logger.setLevel(gunicorn_logger.level)
     return app
