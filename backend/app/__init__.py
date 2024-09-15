@@ -19,18 +19,24 @@ import os
 # print("ALL DIRECTORIES ", os.path.dirname(__file__))
 # print("BEFORE", sys.path)
 
+
 def create_app(config_name='development'):
     
-    # Determine the base directory of the TimeTrackVerify project
-    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..' ,'..'))
+    
+    current_working_directory = os.getcwd()
+
+    # Go to the parent directory of the current working directory
+    parent_directory = os.path.abspath(os.path.join(current_working_directory, '..'))
 
     # Define the path to the React build folder relative to TimeTrackVerify
-    static_folder_path = os.path.join(base_dir, 'front', 'build')
+    static_folder_path = os.path.join(parent_directory, 'front', 'build')
     print("Resolved static folder path:", static_folder_path)
+
 
     # Initialize Flask with the correct static folder
     app = Flask(__name__, static_folder=static_folder_path, static_url_path='/')
     app.config.from_object(config_by_name[config_name])
+    print("Resolved static folder path:", os.path.exists(static_folder_path))
     print("Static folder being used:", app.static_folder)
     # Serve React App for all other routes
     @app.route('/', defaults={'path': ''})
